@@ -12,7 +12,7 @@
           <div class="logo-icon">
             <FolderOutlined />
           </div>
-          <span v-show="!collapsed" class="logo-text">文件管理系统</span>
+          <span v-show="!collapsed" class="logo-text">专项部试题资源管理系统</span>
         </div>
         <a-menu
           v-model:selectedKeys="selectedKeys"
