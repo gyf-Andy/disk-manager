@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.diskmanager.mapper.FileTagMapper">
+    
+    <delete id="deleteByFileId">
+        DELETE FROM file_tag WHERE file_id = #{fileId}
+    </delete>
+    
+    <delete id="deleteByTagId">
+        DELETE FROM file_tag WHERE tag_id = #{tagId}
+    </delete>
+    
+    <insert id="batchInsert">
+        INSERT INTO file_tag (file_id, tag_id, create_time) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.fileId}, #{item.tagId}, NOW())
+        </foreach>
+    </insert>
+    
+    <select id="selectTagIdsByFileId" resultType="java.lang.Long">
+        SELECT tag_id FROM file_tag WHERE file_id = #{fileId}
+    </select>
+    
+</mapper>

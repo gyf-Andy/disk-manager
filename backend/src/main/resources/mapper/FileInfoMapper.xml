@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.diskmanager.mapper.FileInfoMapper">
+    
+    <resultMap id="FileInfoMap" type="com.diskmanager.entity.FileInfo">
+        <id column="id" property="id"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="mime_type" property="mimeType"/>
+        <result column="disk_id" property="diskId"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="last_modified" property="lastModified"/>
+        <result column="md5" property="md5"/>
+        <result column="description" property="description"/>
+        <result column="preview_available" property="previewAvailable"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="category_name" property="categoryName"/>
+        <result column="disk_name" property="diskName"/>
+    </resultMap>
+    
+    <select id="searchFiles" resultMap="FileInfoMap">
+        SELECT 
+            f.*,
+            c.name as category_name,
+            d.disk_name
+        FROM file_info f
+        LEFT JOIN file_category c ON f.category_id = c.id
+        LEFT JOIN disk_info d ON f.disk_id = d.id
+        <where>
+            f.deleted = 0
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (f.file_name LIKE CONCAT('%', #{params.keyword}, '%')
+                     OR f.description LIKE CONCAT('%', #{params.keyword}, '%'))
+            </if>
+            <if test="params.fileType != null and params.fileType != ''">
+                AND f.file_type = #{params.fileType}
+            </if>
+            <if test="params.categoryId != null">
+                AND f.category_id = #{params.categoryId}
+            </if>
+            <if test="params.diskId != null">
+                AND f.disk_id = #{params.diskId}
+            </if>
+            <if test="params.minSize != null">
+                AND f.file_size &gt;= #{params.minSize}
+            </if>
+            <if test="params.maxSize != null">
+                AND f.file_size &lt;= #{params.maxSize}
+            </if>
+            <if test="params.startTime != null and params.startTime != ''">
+                AND f.create_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND f.create_time &lt;= #{params.endTime}
+            </if>
+            <if test="params.tagIds != null and params.tagIds.size() > 0">
+                AND f.id IN (
+                    SELECT ft.file_id FROM file_tag ft
+                    WHERE ft.tag_id IN
+                    <foreach collection="params.tagIds" item="tagId" open="(" separator="," close=")">
+                        #{tagId}
+                    </foreach>
+                )
+            </if>
+        </where>
+        <choose>
+            <when test="params.sortField != null and params.sortField != ''">
+                ORDER BY ${params.sortField}
+                <if test="params.sortOrder != null and params.sortOrder != ''">
+                    ${params.sortOrder}
+                </if>
+            </when>
+            <otherwise>
+                ORDER BY f.create_time DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+    <select id="selectFilesByTagId" resultMap="FileInfoMap">
+        SELECT f.*
+        FROM file_info f
+        INNER JOIN file_tag ft ON f.id = ft.file_id
+        WHERE ft.tag_id = #{tagId} AND f.deleted = 0
+        ORDER BY f.create_time DESC
+    </select>
+    
+    <update id="updateCategoryNull">
+        UPDATE file_info SET category_id = NULL WHERE category_id = #{categoryId}
+    </update>
+    
+</mapper>
